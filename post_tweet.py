@@ -3,6 +3,7 @@
 SLtaxicharter Auto Post Bot
 Posts engaging, human-like Japanese tweets about Sri Lanka to X (@SLtaxicharter).
 Generates unique content every time to avoid duplicate tweet errors.
+Cron schedule handles timing (JST 6:00 / 12:00 / 19:00) - no time check needed here.
 """
 import os
 import random
@@ -360,57 +361,12 @@ def post_to_x(text: str) -> str:
     return response.data['id']
 
 
-LAST_POST_FILE = "last_post.txt"
-
-
-def should_post(now_jst: datetime) -> bool:
-    """Check if we should post now based on JST time and last post time."""
-    # Target hours in JST
-    target_hours = [6, 12, 19]
-    current_hour = now_jst.hour
-    current_minute = now_jst.minute
-    
-    # Check if current time is within the target window (hour:00 to hour:59)
-    if current_hour not in target_hours:
-        print(f"[{now_jst}] Not a posting hour (JST {current_hour}:00). Skipping.")
-        return False
-    
-    # Check if we already posted in this hour slot
-    if os.path.exists(LAST_POST_FILE):
-        with open(LAST_POST_FILE, "r") as f:
-            last_post_str = f.read().strip()
-        try:
-            last_post = datetime.fromisoformat(last_post_str)
-            # If we already posted within the same hour today, skip
-            if (last_post.date() == now_jst.date() and 
-                last_post.hour == current_hour):
-                print(f"[{now_jst}] Already posted at JST {last_post.hour}:00 today. Skipping.")
-                return False
-        except Exception:
-            pass
-    
-    return True
-
-
-def record_post(now_jst: datetime):
-    """Record the time of the last post."""
-    with open(LAST_POST_FILE, "w") as f:
-        f.write(now_jst.isoformat())
-
-
 if __name__ == "__main__":
-    import sys
     now_jst = datetime.now(JST)
-    force_post = os.environ.get("FORCE_POST", "false").lower() == "true"
     print(f"[{now_jst}] Starting SLtaxicharter Auto Post Bot (JST {now_jst.hour}:{now_jst.minute:02d})")
-    
-    if not force_post and not should_post(now_jst):
-        print(f"[{now_jst}] No post needed at this time. Exiting.")
-        sys.exit(0)
-    
+
     tweet_text = get_unique_tweet()
     print(f"[{now_jst}] Generated tweet ({len(tweet_text)} chars):\n{tweet_text}")
-    
+
     tweet_id = post_to_x(tweet_text)
-    record_post(now_jst)
     print(f"[{now_jst}] SUCCESS: Posted tweet ID={tweet_id}")
