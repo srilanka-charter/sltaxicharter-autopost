@@ -2,10 +2,6 @@ name: SLtaxicharter Auto Post
 
 on:
   schedule:
-    # JST 06:00 = UTC 21:00 (previous day)
-    - cron: '0 21 * * *'
-    # JST 12:00 = UTC 03:00
-    - cron: '0 3 * * *'
     # JST 19:00 = UTC 10:00
     - cron: '0 10 * * *'
   workflow_dispatch:  # Allow manual trigger
@@ -31,7 +27,7 @@ jobs:
         run: |
           pip install tweepy openai
 
-      - name: Post tweet (JST 6:00 / 12:00 / 19:00)
+      - name: Post tweet (JST 19:00)
         env:
           X_API_KEY: ${{ secrets.X_API_KEY }}
           X_API_KEY_SECRET: ${{ secrets.X_API_KEY_SECRET }}
